@@ -23,14 +23,25 @@
       mount(jobsBox, A.table([['#', (x) => x.id], ['เวลา', (x) => dt(x.created_at)], ['เครื่อง', (x) => (r.printers.find((p) => p.id === x.printer_id) || {}).name || '—'], ['เอกสาร', (x) => x.doc_label], ['สถานะ', (x) => h(`span.badge.st.st-${x.status}`, null, JOB_ST[x.status])], ['ลอง', (x) => x.attempts], ['ข้อผิดพลาด', (x) => h('span.small', null, x.error || '')],
         ['', (x) => h('div.row', null, h('button.btn.sm', { onclick: () => previewJob(x) }, 'ดูตัวอย่าง'), ['failed', 'printed', 'pending'].includes(x.status) ? h('button.btn.sm', { onclick: async () => { try { await api.post(`/api/admin/print-jobs/${x.id}/retry`); loadJobs(); } catch (e) { BF.error(e); } } }, x.status === 'printed' ? 'พิมพ์ซ้ำ' : 'ลองใหม่') : null)]], j.jobs, { empty: 'ยังไม่มีงานพิมพ์' }));
     };
-    mount(c, A.head('เครื่องพิมพ์', h('button.btn.primary', { onclick: () => printerEditor() }, '+ เพิ่มเครื่องพิมพ์')),
+    const P = BF.printing;
+    const localState = (p) => {
+      const cfg = p.config || {};
+      if (!cfg.device_id) return null;
+      if (cfg.host_device_id !== BF.deviceId()) return h('div.muted.small', null, `${TICON[cfg.transport] || ''} • ต่ออยู่กับอุปกรณ์อื่น${cfg.host_label ? ` (${cfg.host_label})` : ''}`);
+      const el = h('div.small', { dataset: { pstate: p.id, transport: cfg.transport } });
+      paintState(el);
+      return el;
+    };
+    mount(c, A.head('เครื่องพิมพ์', h('button.btn.primary', { onclick: () => searchPrinters(r.printers, routes) }, '🔍 ค้นหาเครื่องพิมพ์'), h('button.btn', { onclick: () => printerEditor() }, '+ เพิ่มเอง (LAN / Bridge)')),
       h('div.card.section', null, h('p.muted', null, 'รองรับ Thermal 58/80 มม. • ใบเสร็จและใบครัวใช้เครื่องเดียวกันได้ • ทุกใบพิมพ์แปลงเป็นภาพ (รองรับภาษาไทยทุกเครื่อง) • สถานะเครื่องพิมพ์มาจากการเชื่อมต่อจริงเท่านั้น'),
         A.table([['ชื่อ', (p) => p.name], ['การเชื่อมต่อ', (p) => CONN[p.connection]], ['ที่อยู่ / ปลายทาง', (p) => p.address || '—'], ['กระดาษ', (p) => `${p.paper_width} มม.`],
-          ['สถานะ', (p) => h('span', null, h('span.badge', { style: { background: p.status === 'online' ? '#dcfce7' : p.status === 'unknown' ? '#f1f5f9' : '#fee2e2' } }, p.status), p.last_seen_at ? h('div.muted.small', null, `ล่าสุด ${dt(p.last_seen_at)}`) : null, p.last_error ? h('div.small', { style: { color: 'var(--danger)' } }, p.last_error) : null)],
+          ['สถานะ', (p) => h('span', null, localState(p), h('span.badge', { style: { background: p.status === 'online' ? '#dcfce7' : p.status === 'unknown' ? '#f1f5f9' : '#fee2e2' } }, p.status), p.last_seen_at ? h('div.muted.small', null, `ล่าสุด ${dt(p.last_seen_at)}`) : null, p.last_error ? h('div.small', { style: { color: 'var(--danger)' } }, p.last_error) : null)],
           ['', (p) => h('div.row', null,
             h('button.btn.sm', { onclick: async () => { try { const x = await api.post(`/api/admin/printers/${p.id}/probe`); BF.toast(x.ok ? `เชื่อมต่อได้ ${x.latency_ms != null ? `(${x.latency_ms} ms)` : ''}` : `ไม่สามารถเชื่อมต่อ: ${x.error || x.status}`, x.ok ? 'success' : 'error', 5000); A.refresh(); } catch (e) { BF.error(e); } } }, 'ตรวจสอบการเชื่อมต่อ'),
             h('button.btn.sm', { onclick: async () => { try { await api.post(`/api/admin/printers/${p.id}/test`); BF.toast('ส่งงานทดสอบแล้ว — ดูสถานะในคิวด้านล่าง', 'success'); setTimeout(loadJobs, 1500); } catch (e) { BF.error(e); } } }, 'พิมพ์ทดสอบ'),
             p.connection === 'bridge' ? h('button.btn.sm', { onclick: () => bridgeKey(p) }, 'Bridge Key') : null,
+            p.config.device_id && p.config.host_device_id === BF.deviceId() ? h('button.btn.sm', { onclick: async () => { try { await P.load(); await P.connect(P.printers.find((x) => x.id === p.id) || p, { prompt: true }); BF.toast('เชื่อมต่อเครื่องพิมพ์แล้ว', 'success'); A.refresh(); } catch (e) { BF.error(e); } } }, 'เชื่อมต่อ') : null,
+            p.config.device_id && p.config.host_device_id !== BF.deviceId() ? h('button.btn.sm', { onclick: async () => { try { await api.put(`/api/admin/printers/${p.id}`, { ...p, config: { ...p.config, host_device_id: BF.deviceId(), host_label: deviceLabel() } }); await P.load(); await P.connect(p).catch(() => {}); A.refresh(); } catch (e) { BF.error(e); } } }, 'ใช้อุปกรณ์นี้พิมพ์') : null,
             h('button.btn.sm', { onclick: () => printerEditor(p) }, 'แก้ไข'),
             h('button.btn.sm.ghost', { onclick: async () => { if (await A.del(`/api/admin/printers/${p.id}`, p.name)) A.refresh(); } }, 'ลบ'))]], printers, { empty: 'ยังไม่มีเครื่องพิมพ์' })),
       h('h3', null, 'กำหนดเอกสาร → เครื่องพิมพ์'), routeTable,
@@ -39,9 +50,70 @@
       h('div.card', { style: { marginTop: '16px' } }, h('h3', null, 'วิธีเชื่อมต่อ'),
         h('p', null, h('b', null, 'LAN / Network: '), 'ใส่ IP:Port ของเครื่องพิมพ์ (ปกติพอร์ต 9100) เซิร์ฟเวอร์ส่งงานให้โดยตรง'),
         h('p', null, h('b', null, 'Local Print Bridge: '), 'สำหรับเครื่องพิมพ์ USB/Serial/CUPS ที่ต่อกับคอมพิวเตอร์ในร้าน — ติดตั้ง Node.js แล้วรัน ', h('code', null, 'node print-bridge/bridge.js --server <URL ระบบ> --key <Bridge Key> --target file:/dev/usb/lp0')),
-        h('p', null, h('b', null, 'Browser Print Station: '), 'เปิด ', h('a', { href: '/print-station/', target: '_blank' }, '/print-station/'), ' ด้วย Chrome/Edge บนเครื่องที่ต่อเครื่องพิมพ์ (USB / Bluetooth) แล้วกดเชื่อมต่อ หน้านี้ต้องเปิดค้างไว้ระหว่างใช้งาน')));
+        h('p', null, h('b', null, 'USB / Bluetooth: '), 'บนคอมพิวเตอร์หรือแท็บเล็ต Android ที่ต่อเครื่องพิมพ์ เปิดหน้านี้ด้วย Chrome/Edge กด "🔍 ค้นหาเครื่องพิมพ์" แล้วเลือกเครื่อง • หลังจากนั้นเมื่อเปิดหน้า POS / Admin / KDS บนอุปกรณ์นั้น ระบบจะเชื่อมต่อและพิมพ์ให้อัตโนมัติ (Bluetooth อาจต้องกด "เชื่อมต่อ" ใหม่หลังเปิดเบราว์เซอร์) • หรือเปิด ', h('a', { href: '/print-station/', target: '_blank' }, '/print-station/'), ' ค้างไว้เป็นเครื่องพิมพ์กลาง')));
     loadJobs();
   };
+  const deviceLabel = () => { const ua = navigator.userAgent; return `${/Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Mac/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : 'Device'} • ${/Edg\//.test(ua) ? 'Edge' : /Chrome/.test(ua) ? 'Chrome' : 'Browser'}`; };
+  const TICON = { usb: '🔌 USB', ble: '📶 Bluetooth', serial: '🔗 Serial / Bluetooth SPP' };
+  function paintState(el) {
+    const st = BF.printing.state[el.dataset.pstate];
+    el.style.color = st && st.status === 'online' ? 'var(--success)' : st ? 'var(--danger)' : 'var(--muted)';
+    el.textContent = `${TICON[el.dataset.transport] || ''} • อุปกรณ์นี้ • ${st ? (st.status === 'online' ? 'เชื่อมต่อแล้ว' : st.error || 'ไม่ได้เชื่อมต่อ') : 'กำลังเชื่อมต่อ…'}`;
+  }
+  BF.printing.onChange(() => document.querySelectorAll('[data-pstate]').forEach(paintState));
+
+  // "ค้นหาเครื่องพิมพ์": list devices this browser already has access to + open the browser's device chooser
+  async function searchPrinters(existing, routes) {
+    const P = BF.printing; const sup = P.support;
+    const body = h('div.form');
+    const add = (dev) => { m.close(); addFound(dev, existing, routes); };
+    const draw = async () => {
+      let known = [];
+      try { known = await P.known(); } catch { /* ignore */ }
+      mount(body,
+        !sup.secure ? h('div.warnbox', null, 'ต้องเปิดหน้านี้ผ่าน HTTPS จึงจะค้นหาเครื่องพิมพ์ USB/Bluetooth ได้') : null,
+        h('div.row', null,
+          h('button.btn.primary', { disabled: !sup.usb, onclick: () => pick('usb') }, '🔌 ค้นหาเครื่องพิมพ์ USB'),
+          h('button.btn.primary', { disabled: !sup.ble, onclick: () => pick('ble') }, '📶 ค้นหา Bluetooth'),
+          h('button.btn', { disabled: !sup.serial, onclick: () => pick('serial') }, '🔗 Serial / Bluetooth SPP')),
+        h('div.muted.small', null, `เบราว์เซอร์นี้: USB ${sup.usb ? '✔' : '✘'} • Bluetooth ${sup.ble ? '✔' : '✘'} • Serial ${sup.serial ? '✔' : '✘'}`, !sup.usb && !sup.ble ? ' — ใช้ Chrome หรือ Edge บนคอมพิวเตอร์ / Android (iPhone, iPad, Safari ไม่รองรับ)' : ''),
+        h('h4', null, 'เครื่องที่เชื่อมต่อกับอุปกรณ์นี้แล้ว'),
+        known.length ? A.table([['อุปกรณ์', (d) => h('div', null, h('b', null, d.device_name), d.manufacturer ? h('div.muted.small', null, d.manufacturer) : null)], ['การเชื่อมต่อ', (d) => TICON[d.transport]], ['รหัส', (d) => h('code.small', null, d.device_id)],
+          ['', (d) => { const ex = existing.find((p) => p.active && p.config.device_id === d.device_id); return ex ? h('span.muted.small', null, `เพิ่มแล้ว: ${ex.name}`) : h('button.btn.sm.primary', { onclick: () => add(d) }, 'เพิ่มเครื่องนี้'); }]], known)
+          : h('div.muted', null, 'ยังไม่มี — กดปุ่มค้นหาด้านบน แล้วเลือกเครื่องพิมพ์จากหน้าต่างของเบราว์เซอร์'),
+        h('div.muted.small', null, 'เครื่องพิมพ์ LAN (IP) ค้นหาจากเบราว์เซอร์ไม่ได้ — ใช้ "+ เพิ่มเอง" แล้วใส่ IP:9100'));
+    };
+    async function pick(kind) {
+      let dev;
+      try { dev = await P.search(kind); } catch (e) { if (e && e.name === 'NotFoundError') return; return BF.error(e); }
+      const ex = existing.find((p) => p.active && p.config.device_id === dev.device_id);
+      if (!ex) return add(dev);
+      m.close();
+      try {
+        if (ex.config.host_device_id !== BF.deviceId()) await api.put(`/api/admin/printers/${ex.id}`, { ...ex, config: { ...ex.config, host_device_id: BF.deviceId(), host_label: deviceLabel() } });
+        await P.load(); await P.connect(P.printers.find((x) => x.id === ex.id) || ex).catch(() => {});
+        BF.toast(`${ex.name} มีอยู่แล้ว — ตั้งให้พิมพ์จากอุปกรณ์นี้`, 'success'); A.refresh();
+      } catch (e) { BF.error(e); }
+    }
+    const m = BF.modal('ค้นหาเครื่องพิมพ์', body, { wide: true });
+    draw();
+  }
+  function addFound(dev, existing, routes) {
+    A.editor(`เพิ่มเครื่องพิมพ์ ${TICON[dev.transport]}`, [
+      { key: 'name', label: 'ชื่อเครื่องพิมพ์' }, { key: 'paper_width', label: 'ความกว้างกระดาษ', type: 'select', options: [[80, '80 มม.'], [58, '58 มม.']] },
+      ...(dev.transport === 'serial' ? [{ key: 'baud', label: 'Baud rate', type: 'number' }] : []),
+      { key: 'cut', label: 'ตัดกระดาษอัตโนมัติ', type: 'check', default: true }, { key: 'drawer', label: 'เปิดลิ้นชักเงินเมื่อพิมพ์ใบเสร็จ', type: 'check' },
+      { key: 'all_docs', label: 'ใช้เครื่องนี้พิมพ์ทุกเอกสาร (ใบ QR, ใบสมัครสมาชิก, ใบครัว, ใบเสร็จ, ใบสรุป, ใบกำกับภาษี)', type: 'check', default: !existing.some((p) => p.active) },
+    ], { name: dev.device_name, paper_width: /58/.test(dev.device_name) ? 58 : 80, baud: 9600, cut: true }, async (v) => {
+      const r = await api.post('/api/admin/printers', { name: v.name, connection: 'browser', paper_width: Number(v.paper_width), config: { cut: v.cut, drawer: v.drawer, transport: dev.transport, device_id: dev.device_id, device_name: dev.device_name, host_device_id: BF.deviceId(), host_label: deviceLabel(), baud: v.baud } });
+      if (v.all_docs) await api.put('/api/admin/print-routes', { routes: routes.map((x) => ({ ...x, printer_id: r.id })) });
+      await BF.printing.load();
+      const p = BF.printing.printers.find((x) => x.id === r.id);
+      if (p) { try { await BF.printing.connect(p); BF.toast('เชื่อมต่อเครื่องพิมพ์แล้ว — กด "พิมพ์ทดสอบ" ได้เลย', 'success', 5000); } catch (e) { BF.error(e); } }
+      A.refresh();
+    }, { wide: false });
+  }
+
   function printerEditor(p) {
     A.editor(p ? `แก้ไข ${p.name}` : 'เพิ่มเครื่องพิมพ์', [
       { key: 'name', label: 'ชื่อเครื่องพิมพ์ เช่น Printer A' }, { key: 'connection', label: 'การเชื่อมต่อ', type: 'select', options: Object.entries(CONN) },
@@ -49,7 +121,7 @@
       { key: 'paper_width', label: 'ความกว้างกระดาษ', type: 'select', options: [[80, '80 มม. (576 dots)'], [58, '58 มม. (384 dots)']] },
       { key: 'cut', label: 'ตัดกระดาษอัตโนมัติ', type: 'check', default: true }, { key: 'beep', label: 'เสียงเตือนเมื่อพิมพ์ใบครัว', type: 'check' }, { key: 'drawer', label: 'เปิดลิ้นชักเงินเมื่อพิมพ์ใบเสร็จ', type: 'check' }, { key: 'active', label: 'ใช้งาน', type: 'check', default: true },
     ], p ? { ...p, ...p.config } : { connection: 'network', paper_width: 80, cut: true, active: true }, async (v) => {
-      const body = { ...v, paper_width: Number(v.paper_width), config: { cut: v.cut, beep: v.beep, drawer: v.drawer } };
+      const body = { ...v, paper_width: Number(v.paper_width), config: { ...(p ? p.config : {}), cut: v.cut, beep: v.beep, drawer: v.drawer } };
       if (p) await api.put(`/api/admin/printers/${p.id}`, body);
       else { const r = await api.post('/api/admin/printers', body); if (r.bridge_key) showKey(r.bridge_key); }
       A.refresh();

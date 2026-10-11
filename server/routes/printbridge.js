@@ -20,7 +20,7 @@ r.post('/bridge/claim', async (req, res) => { const p = bridge(req); res.json({ 
 r.post('/bridge/jobs/:id/result', (req, res) => { const p = bridge(req); printing.report(p, Number(req.params.id), !!req.body.ok, req.body.error); res.json({ ok: true }); });
 
 // ---- Browser print station (WebUSB / Web Serial / Web Bluetooth in Chrome) ----
-const station = auth.requireStaff('settings.manage', 'table.close', 'kitchen.update');
+const station = auth.requireStaff('settings.manage', 'table.close', 'table.open', 'order.create', 'kitchen.update', 'call.handle');
 function browserPrinter(req) {
   const p = db.get().prepare("SELECT * FROM printers WHERE id=? AND branch_id=? AND connection='browser' AND active=1").get(req.params.pid, req.branchId);
   if (!p) throw err(404, 'printer_not_found', 'ไม่พบเครื่องพิมพ์ (ต้องเป็นชนิด Browser)');

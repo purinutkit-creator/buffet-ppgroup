@@ -36,7 +36,7 @@ function init(httpServer) {
       if (staff.permissions.includes('kitchen.update')) socket.join(`kds:${branchId}`);
       socket.on('join', (room) => {
         if (room === 'kds') socket.join(`kds:${branchId}`);
-        if (room === 'printers' && staff.permissions.includes('settings.manage')) socket.join(`printers:${branchId}`);
+        if (room === 'printers') socket.join(`printers:${branchId}`);
       });
     } else if (sessionId) {
       socket.join(`session:${sessionId}`);

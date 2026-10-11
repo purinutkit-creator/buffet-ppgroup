@@ -17,6 +17,7 @@
   A.start = async () => {
     await BF.requireLogin('Admin • หลังร้าน');
     try { A.boot = await api.get('/api/admin/bootstrap'); } catch (e) { return mount($('#app'), BF.states.error(e, A.start)); }
+    BF.printing.start(BF.socket({ staffToken: BF.auth.token() }));
     shell();
   };
   A.reloadBoot = async () => { A.boot = await api.get('/api/admin/bootstrap'); };

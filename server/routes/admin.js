@@ -503,7 +503,10 @@ function printerFields(b) {
   const paper = Number(b.paper_width) === 58 ? 58 : 80;
   if (b.connection === 'network' && !/^[A-Za-z0-9.-]+(:\d{1,5})?$/.test(String(b.address || ''))) throw err(400, 'invalid_address', 'ระบุ IP:Port ของเครื่องพิมพ์ เช่น 192.168.1.50:9100');
   const cfg = b.config || {};
-  return [String(b.name || 'Printer').slice(0, 40), b.connection, b.address ? String(b.address).slice(0, 200) : null, paper, paper === 58 ? 384 : 576, JSON.stringify({ cut: cfg.cut !== false, beep: !!cfg.beep, drawer: !!cfg.drawer, transport: ['usb', 'serial', 'bluetooth', 'ble', 'file', 'cups', 'tcp'].includes(cfg.transport) ? cfg.transport : undefined }), bool(b.active ?? 1)];
+  return [String(b.name || 'Printer').slice(0, 40), b.connection, b.address ? String(b.address).slice(0, 200) : null, paper, paper === 58 ? 384 : 576, JSON.stringify({ cut: cfg.cut !== false, beep: !!cfg.beep, drawer: !!cfg.drawer, transport: ['usb', 'serial', 'ble'].includes(cfg.transport) ? cfg.transport : undefined,
+    device_id: cfg.device_id ? String(cfg.device_id).slice(0, 120) : undefined, device_name: cfg.device_name ? String(cfg.device_name).slice(0, 80) : undefined,
+    host_device_id: cfg.host_device_id ? String(cfg.host_device_id).slice(0, 64) : undefined, host_label: cfg.host_label ? String(cfg.host_label).slice(0, 80) : undefined,
+    baud: cfg.baud ? Math.max(1200, Math.min(921600, parseInt(cfg.baud, 10) || 9600)) : undefined }), bool(b.active ?? 1)];
 }
 r.post('/printers', SET, (req, res) => {
   const id = d().prepare('INSERT INTO printers(branch_id, name, connection, address, paper_width, dots, config, active) VALUES(?,?,?,?,?,?,?,?)').run(req.branchId, ...printerFields(req.body)).lastInsertRowid;

@@ -202,6 +202,9 @@
     document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
   };
 
+  // Stable id of this browser/device (used to bind USB/Bluetooth printers to the device they are plugged into)
+  BF.deviceId = () => { let d = store.get('bf_device'); if (!d) { d = ikey().slice(0, 20); store.set('bf_device', d); } return d; };
+
   BF.debounce = (fn, ms = 250) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
 
   Object.assign(BF, { h, append, $, $$, clear, mount, money, baht, hhmm, dt, dur, pad, toSatang, tr, ikey, lang: 'th' });

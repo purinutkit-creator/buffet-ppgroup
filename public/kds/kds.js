@@ -34,6 +34,7 @@
   const reload = BF.debounce(load, 200);
   function connect() {
     const s = BF.socket({ staffToken: BF.auth.token() });
+    BF.printing.start(s);
     s.on('connect', () => { s.emit('join', 'kds'); reload(); });
     s.on('kds:new', ({ order }) => {
       if (S.station === 'all' || order.items.some((i) => String(i.station_id) === String(S.station))) {

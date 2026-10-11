@@ -53,6 +53,7 @@
   // ---------- realtime ----------
   function connect() {
     S.socket = BF.socket({ staffToken: BF.auth.token() });
+    BF.printing.start(S.socket);
     const refresh = BF.debounce(refreshTables, 250);
     S.socket.on('tables:changed', (p) => { refresh(); if (S.panel && p.session_id === S.panel.id) refreshPanel(); });
     S.socket.on('order:new', ({ order }) => { if (S.panel && order.session_id === S.panel.id) refreshPanel(); refresh(); });
