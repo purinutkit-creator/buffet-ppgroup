@@ -155,6 +155,7 @@ function afterPayment(bill, closed) {
   if (closed) {
     printing.enqueueDoc(bill.branch_id, 'close_summary', bill.session_id, { auto: true });
     rt.toSession(bill.session_id, 'session:closed', {});
+    rt.toStaff(bill.branch_id, 'calls:changed', {});
     rt.kickSession(bill.session_id);
   }
   rt.toStaff(bill.branch_id, 'tables:changed', { session_id: bill.session_id });

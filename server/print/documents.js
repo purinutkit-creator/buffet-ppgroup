@@ -61,7 +61,7 @@ function snapshot(docType, refId, branchId) {
     return base;
   }
   if (docType === 'kitchen') {
-    const k = d.prepare(`SELECT k.*, o.order_no, o.guest_label, o.source, t.code table_code, s.public_code, ks.name station, (SELECT COUNT(*) FROM kitchen_tickets k2 WHERE k2.session_id=k.session_id AND k2.id<k.id) prev
+    const k = d.prepare(`SELECT k.*, o.order_no, o.guest_label, o.source, t.code table_code, s.public_code, ks.name station, (SELECT COUNT(*) FROM kitchen_tickets k2 WHERE k2.session_id=k.session_id AND k2.order_id<k.order_id) prev
       FROM kitchen_tickets k JOIN orders o ON o.id=k.order_id JOIN table_sessions s ON s.id=k.session_id JOIN tables t ON t.id=s.table_id LEFT JOIN kitchen_stations ks ON ks.id=k.station_id WHERE k.id=?`).get(refId);
     const items = d.prepare('SELECT name, qty, options, note, guest_label FROM order_items WHERE ticket_id=? ORDER BY id').all(refId)
       .map((i) => ({ name: db.J(i.name, {}), qty: i.qty, options: db.J(i.options, []), note: i.note, guest: i.guest_label }));

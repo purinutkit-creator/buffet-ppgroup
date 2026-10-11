@@ -411,7 +411,8 @@
     btn.disabled = true;
     try {
       const r = await api.post(`${base}/calls`, { type_id: c.id, guest_label: S.guest || undefined }, { token: null });
-      S.calls.unshift(r.call); renderCallList();
+      if (!S.calls.some((x) => x.id === r.call.id)) S.calls.unshift(r.call);
+      renderCallList();
       BF.toast(`${T(c.name)} • ${t('call_sent')}`, 'success');
     } catch (e) { if (e.status === 410) return ended(e); BF.error(e); }
     setTimeout(() => { btn.disabled = false; }, 1500);

@@ -65,6 +65,7 @@
       if (S.tab === 'prints') renderTab();
       if (S.panel) refreshPanelPrints(job);
     });
+    S.socket.on('calls:changed', () => loadCalls());
     S.socket.on('bill:updated', () => { if (S.tab === 'bills') renderTab(); });
     S.socket.on('connect', () => refresh());
   }
@@ -183,7 +184,10 @@
           h('label', null, 'ระยะเวลา (นาที)', h('input', { type: 'number', min: 15, step: 15, placeholder: 'ตามแพ็กเกจ', oninput: (e) => { st.duration = e.target.value; drawSummary(); } }))),
         h('label.check', null, h('input', { type: 'checkbox', checked: true, onchange: (e) => { st.printSlip = e.target.checked; } }), 'พิมพ์ใบสมัครสมาชิก (ถ้าไม่เป็นสมาชิก)'),
         summary));
-    const m = BF.modal(`เปิดโต๊ะ ${t.code}`, content, { wide: true, actions: [h('button.btn', { onclick: () => m.close() }, 'ยกเลิก'), okBtn] });
+    const m = BF.modal(`เปิดโต๊ะ ${t.code}`, content, { wide: true, actions: [
+      t.status === 'available' ? h('button.btn.ghost', { onclick: () => { const note = prompt('จองโต๊ะ — ชื่อ/เวลา (เช่น คุณบี 19:00)'); if (note == null) return; m.close(); setStatus(t, 'reserved', note); } }, '📅 ตั้งเป็นจอง') : null,
+      t.status === 'available' ? h('button.btn.ghost', { onclick: () => { m.close(); setStatus(t, 'disabled'); } }, 'ปิดใช้งาน') : null,
+      h('button.btn', { onclick: () => m.close() }, 'ยกเลิก'), okBtn] });
     drawPkgs(); drawMember(); drawSummary();
     async function submit() {
       okBtn.disabled = true;
@@ -538,7 +542,7 @@
         refreshTables();
       } catch (e) { BF.error(e); payBtn.disabled = false; }
     } }, `ยืนยันรับชำระ`);
-    const m = BF.modal(`รับชำระ ${bill.bill_no}${bill.split_label ? ` (${bill.split_label})` : ''} • ${bills.length > 1 ? `เหลือ ${bills.length} บิล` : ''}`, h('div.form', null,
+    const m = BF.modal(`รับชำระ ${bill.bill_no}${bill.split_label ? ` (${bill.split_label})` : ''}${bills.length > 1 ? ` • เหลือ ${bills.length} บิล` : ''}`, h('div.form', null,
       h('div.pay-due', null, h('span.muted', null, 'ยอดที่ต้องชำระ'), h('div.big', null, baht(due))),
       methodBtns, h('label', null, 'จำนวนเงิน', amount), info, listEl, addSplit,
       h('label.check', null, tiToggle, 'ออกใบกำกับภาษีเต็มรูป'), tiBox), { actions: [h('button.btn', { onclick: () => m.close() }, 'ปิด'), payBtn] });

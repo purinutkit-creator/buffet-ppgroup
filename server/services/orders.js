@@ -242,7 +242,7 @@ function kdsTickets(branchId, { stationId, includeDone = false } = {}) {
   if (!includeDone) where.push("k.status NOT IN ('ready','served','cancelled','unavailable')");
   else { where.push('k.created_at>?'); args.push(now() - 3 * 3600e3); }
   const rows = d.prepare(`SELECT k.*, o.order_no, o.created_at order_at, t.code table_code, s.public_code, ks.name station_name, ks.color station_color,
-      (SELECT COUNT(*) FROM kitchen_tickets k2 WHERE k2.session_id=k.session_id AND k2.id<k.id) prev_count
+      (SELECT COUNT(*) FROM kitchen_tickets k2 WHERE k2.session_id=k.session_id AND k2.order_id<k.order_id) prev_count
     FROM kitchen_tickets k JOIN orders o ON o.id=k.order_id JOIN table_sessions s ON s.id=k.session_id JOIN tables t ON t.id=s.table_id
     LEFT JOIN kitchen_stations ks ON ks.id=k.station_id WHERE ${where.join(' AND ')} ORDER BY k.priority DESC, k.created_at LIMIT 200`).all(...args);
   return rows.map((k) => ({

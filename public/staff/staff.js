@@ -56,6 +56,7 @@
     s.on('connect', () => { loadCalls(); loadReady(); });
     s.on('call:new', ({ call }) => { upsert(call); if (S.sound) BF.beep(990, 160, 3); if (navigator.vibrate) navigator.vibrate([200, 100, 200]); BF.toast(`โต๊ะ ${call.table_code}: ${tr(call.label)}`, 'warn', 5000); });
     s.on('call:updated', ({ call }) => upsert(call));
+    s.on('calls:changed', () => loadCalls());
     s.on('order:updated', ({ order }) => { if (order.items.some((i) => i.status === 'ready') && S.sound) BF.beep(660, 120, 1); reloadReady(); });
   }
   start();
