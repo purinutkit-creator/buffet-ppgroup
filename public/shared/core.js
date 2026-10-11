@@ -5,6 +5,8 @@
 
   // ---------- DOM ----------
   function h(tag, props, ...children) {
+    // allow h('div', 'text') / h('div', node) / h('div', [..]) — props omitted
+    if (props != null && (typeof props !== 'object' || props instanceof Node || Array.isArray(props))) { children.unshift(props); props = null; }
     const name = /^[a-z0-9-]*/i.exec(tag)[0];
     const el = document.createElement(name || 'div');
     const cls = [];
@@ -13,7 +15,7 @@
     if (props) for (const [k, v] of Object.entries(props)) {
       if (v == null || v === false) continue;
       if (k === 'class') el.className += (el.className ? ' ' : '') + v;
-      else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
+      else if (k === 'style' && typeof v === 'object') { for (const [sk, sv] of Object.entries(v)) { if (sv == null) continue; if (sk.startsWith('--')) el.style.setProperty(sk, sv); else el.style[sk] = sv; } }
       else if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2).toLowerCase(), v);
       else if (k === 'html') el.innerHTML = v; // only used with sanitized server HTML
       else if (k === 'dataset') Object.assign(el.dataset, v);

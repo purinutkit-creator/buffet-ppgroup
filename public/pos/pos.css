@@ -1,0 +1,83 @@
+body { background: var(--surface); }
+.pos-main { overflow: auto; }
+.pad { padding: 16px; max-width: 1200px; margin: 0 auto; }
+.mt { margin-top: 20px; }
+.line { padding: 8px 0; border-bottom: 1px solid var(--line); }
+.floor-bar { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 12px 16px 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 10px 16px; font-size: 13px; color: var(--muted); }
+.legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.legend-item i { width: 12px; height: 12px; border-radius: 4px; display: inline-block; }
+.zone-block { padding: 0 16px 16px; }
+.zone-block h3 { margin: 8px 0; }
+.floor-scroll { overflow: auto; background: #fff; border-radius: 16px; border: 1px solid var(--line); }
+.floor { position: relative; background-image: radial-gradient(circle, rgba(0,0,0,.06) 1px, transparent 1px); background-size: 20px 20px; min-width: 100%; }
+.table-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; padding: 0 16px 24px; }
+.table-grid.small { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); padding: 0; }
+.tcard { border: none; background: #fff; border-radius: 16px; border-top: 6px solid var(--c); box-shadow: 0 2px 10px rgba(0,0,0,.08); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px; min-height: 100px; font-family: inherit; color: var(--text); position: relative; transition: transform .08s; }
+.tcard:active { transform: scale(.97); }
+.tcard.round { border-radius: 50%; border: 5px solid var(--c); }
+.tcard .tcode { font-size: 24px; font-weight: 800; line-height: 1.1; }
+.tcard .tsub { font-size: 13px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+.tcard .tlabel { font-size: 12px; font-weight: 700; color: var(--c); text-align: center; }
+.tcard .ttime { font-size: 14px; font-weight: 800; color: var(--c); }
+.tcard .ttime.over { color: var(--danger); animation: blink 1s infinite; }
+.call-badge { background: var(--danger); color: #fff; border-radius: 999px; padding: 0 6px; font-weight: 800; animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: .45; } }
+
+/* open table */
+.open-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+@media (max-width: 760px) { .open-grid { grid-template-columns: 1fr; } }
+.pkg-tabs { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-bottom: 12px; }
+.pkg-tab { border: 2px solid var(--line); border-radius: 14px; background: #fff; padding: 10px; cursor: pointer; text-align: left; font-family: inherit; border-left: 6px solid var(--pc); }
+.pkg-tab.active { border-color: var(--pc); background: color-mix(in srgb, var(--pc) 8%, #fff); }
+.pkg-tab:disabled { opacity: .45; cursor: not-allowed; }
+.price-rows { display: grid; gap: 8px; }
+.price-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: var(--surface); }
+.stepper.lg button { width: 44px; height: 44px; font-size: 22px; }
+.stepper.lg span { min-width: 36px; font-size: 20px; }
+.open-summary { background: var(--surface); border-radius: 14px; padding: 12px 14px; }
+.member-chip { display: flex; align-items: center; gap: 6px; background: var(--surface); padding: 6px 10px; border-radius: 10px; color: var(--text); }
+.list-btn { display: block; width: 100%; text-align: left; padding: 12px; border: none; border-bottom: 1px solid var(--line); background: #fff; cursor: pointer; font-family: inherit; }
+.list-btn:hover { background: var(--surface); }
+.member-results { max-height: 50vh; overflow: auto; }
+
+/* session panel */
+.panel-modal { width: min(1080px, 100%) !important; }
+.panel { display: grid; gap: 12px; }
+.panel-head { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.panel-total { text-align: right; }
+.big { font-size: 30px; font-weight: 800; line-height: 1.1; }
+#panel-left.over { color: var(--danger); }
+.action-bar { display: flex; flex-wrap: wrap; gap: 6px; }
+.ptabs { border-top: 1px solid var(--line); padding-top: 10px; }
+.ptab-body { min-height: 160px; }
+.order-box { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; background: #fff; }
+.item-line { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px dashed var(--line); }
+.checkout-bar { display: flex; justify-content: flex-end; gap: 10px; position: sticky; bottom: -16px; background: var(--bg); padding: 12px 0 4px; border-top: 1px solid var(--line); }
+.btn.lg { height: 52px; font-size: 17px; padding: 0 26px; }
+.qr-big { width: 280px; margin: 0 auto; border-radius: 12px; }
+.bill .sum-row { border-bottom: 1px dotted var(--line); }
+
+/* staff order */
+.staff-order { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+@media (max-width: 760px) { .staff-order { grid-template-columns: 1fr; } }
+.staff-menu { max-height: 60vh; overflow: auto; }
+.menu-buttons { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+.menu-btn { border: 1px solid var(--line); background: #fff; border-radius: 12px; padding: 6px; cursor: pointer; display: grid; gap: 4px; text-align: center; font-family: inherit; font-weight: 600; font-size: 13px; }
+.menu-btn img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; }
+.menu-btn:disabled { opacity: .45; }
+
+/* payment */
+.pay-due { text-align: center; background: var(--surface); border-radius: 14px; padding: 12px; }
+.method-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.pay-info { display: grid; gap: 10px; }
+.big-change { font-size: 24px; font-weight: 800; color: var(--success); text-align: center; padding: 6px; }
+
+/* calls */
+.call-card { display: flex; gap: 12px; align-items: center; background: #fff; border-radius: 14px; padding: 12px; margin-bottom: 8px; border-left: 6px solid var(--muted); box-shadow: var(--shadow); flex-wrap: wrap; }
+.call-card.call-pending { border-left-color: var(--danger); }
+.call-card.call-accepted, .call-card.call-in_progress { border-left-color: var(--warning); }
+.call-card.call-done { border-left-color: var(--success); opacity: .7; }
+.call-table { font-size: 24px; font-weight: 800; min-width: 56px; text-align: center; }
+.call-wait { font-weight: 800; font-size: 18px; color: var(--danger); }
+.member-head { color: #fff; border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; margin-bottom: 12px; }
