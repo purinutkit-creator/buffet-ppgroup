@@ -14,8 +14,8 @@ registerBundled();
 const now = Date.now();
 
 if (!d.prepare('SELECT 1 FROM restaurants').get()) {
-  setup({ restaurantName: { th: 'Papper international buffet Bangsaen', en: 'Papper international buffet Bangsaen', zh: 'Papper 国际自助餐 邦盛' }, branchCode: 'BS', branchName: { th: 'Papper international buffet Bangsaen', en: 'Papper international buffet Bangsaen' }, ownerCode: 'OWNER', ownerName: 'เจ้าของร้าน', ownerPin: '123456', taxId: '0205565018968', phone: '061-441-1308' });
-  console.log('Created restaurant + owner OWNER / PIN 123456');
+  setup({ restaurantName: { th: 'Papper international buffet Bangsaen', en: 'Papper international buffet Bangsaen', zh: 'Papper 国际自助餐 邦盛' }, branchCode: 'BS', branchName: { th: 'Papper international buffet Bangsaen', en: 'Papper international buffet Bangsaen' }, ownerCode: 'OWNER', ownerName: 'เจ้าของร้าน', ownerPin: process.env.SEED_OWNER_PIN || '123456', taxId: '0205565018968', phone: '061-441-1308' });
+  console.log(`Created restaurant + owner OWNER / PIN ${process.env.SEED_OWNER_PIN ? '(from SEED_OWNER_PIN)' : '123456'}`);
 }
 if (d.prepare('SELECT 1 FROM buffet_packages').get()) { console.log('Demo data already present — skipping.'); process.exit(0); }
 const rid = d.prepare('SELECT id FROM restaurants').get().id;
@@ -116,12 +116,12 @@ async function asset(kind, buf, name) { return (await media.save({ buffer: buf, 
   // Staff accounts for each role (demo PINs)
   const roles = Object.fromEntries(d.prepare('SELECT code, id FROM roles').all().map((r) => [r.code, r.id]));
   for (const [code, name, role, pin] of [['M01', 'ผู้จัดการ', 'manager', '1111'], ['C01', 'แคชเชียร์', 'cashier', '2222'], ['W01', 'พนักงานเสิร์ฟ', 'waiter', '3333'], ['K01', 'ครัว', 'kitchen', '4444']])
-    if (!d.prepare('SELECT 1 FROM staff WHERE code=?').get(code)) d.prepare('INSERT INTO staff(restaurant_id, code, name, role_id, pin_hash, branch_ids, created_at) VALUES(?,?,?,?,?,?,?)').run(rid, code, name, roles[role], auth.hashPin(pin), '[]', now);
+    if (!d.prepare('SELECT 1 FROM staff WHERE code=?').get(code)) d.prepare('INSERT INTO staff(restaurant_id, code, name, role_id, pin_hash, branch_ids, created_at) VALUES(?,?,?,?,?,?,?)').run(rid, code, name, roles[role], auth.hashPin(process.env.SEED_STAFF_PIN || pin), '[]', now);
 
   // A promotion
   d.prepare(`INSERT INTO promotions(restaurant_id, code, name, description, type, value, points_cost, members_only, priority, created_at) VALUES(?,?,?,?,?,?,?,?,?,?)`).run(rid, 'MEMBER100', JSON.stringify({ th: 'ส่วนลด 100 บาท', en: '100 THB off', zh: '减100泰铢' }), JSON.stringify({ th: 'ใช้ 100 คะแนนแลกส่วนลด 100 บาท' }), 'discount_amount', 10000, 100, 1, 1, now);
   d.prepare(`INSERT INTO promotions(restaurant_id, code, name, description, type, value, from_package_id, to_package_id, points_cost, members_only, priority, created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`).run(rid, 'UPGRADE', JSON.stringify({ th: 'อัปเกรดเป็น PREMIUM 1 ท่าน', en: 'Upgrade 1 guest to PREMIUM' }), JSON.stringify({ th: 'ใช้ 300 คะแนน' }), 'package_upgrade', 0, pk.HAPPINESS, pk.PREMIUM, 300, 1, 0, now);
   d.prepare(`INSERT INTO promotions(restaurant_id, code, name, type, value, members_only, points_cost, priority, created_at) VALUES(?,?,?,?,?,?,?,?,?)`).run(rid, 'WELCOME10', JSON.stringify({ th: 'ส่วนลด 10% (โค้ดหน้าร้าน)', en: '10% off' }), 'discount_percent', 1000, 0, 0, 0, now);
 
-  console.log('✔ Demo data created. Staff logins: OWNER/123456, M01/1111 (manager), C01/2222 (cashier), W01/3333 (waiter), K01/4444 (kitchen)');
+  console.log(process.env.SEED_STAFF_PIN ? '✔ Demo data created. Staff logins: M01 (manager), C01 (cashier), W01 (waiter), K01 (kitchen) with SEED_STAFF_PIN' : '✔ Demo data created. Staff logins: OWNER/123456, M01/1111 (manager), C01/2222 (cashier), W01/3333 (waiter), K01/4444 (kitchen)');
 })();
