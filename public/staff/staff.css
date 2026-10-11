@@ -1,0 +1,12 @@
+body { background: var(--surface); }
+.list { overflow: auto; padding: 12px; display: grid; gap: 10px; align-content: start; max-width: 900px; width: 100%; margin: 0 auto; }
+.call { background: #fff; border-radius: 16px; padding: 14px; display: flex; gap: 14px; align-items: center; box-shadow: var(--shadow); border-left: 8px solid var(--muted); flex-wrap: wrap; }
+.c-pending { border-left-color: var(--danger); }
+.c-accepted, .c-in_progress { border-left-color: var(--warning); }
+.c-ready { border-left-color: var(--success); }
+.c-table { font-size: 30px; font-weight: 800; min-width: 70px; text-align: center; }
+.c-label { font-size: 19px; font-weight: 700; }
+.c-wait { font-size: 20px; font-weight: 800; color: var(--danger); }
+.c-ready .c-wait { color: var(--success); }
+.c-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+@media (max-width: 600px) { .c-actions { width: 100%; } .c-actions .btn { flex: 1; } }

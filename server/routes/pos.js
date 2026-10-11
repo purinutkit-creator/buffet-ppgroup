@@ -256,6 +256,13 @@ r.post('/redemptions/:id/cancel', P('member.manage'), (req, res) => {
 r.get('/calls', P(), (req, res) => res.json({ calls: calls.openCalls(req.branchId), server_time: now() }));
 r.post('/calls/:id', P('call.handle'), (req, res) => res.json({ call: calls.updateCall(req, Number(req.params.id), String(req.body.status)) }));
 
+// ---- items ready to serve (waiter feed) ----
+r.get('/ready-items', P(), (req, res) => {
+  const rows = db.get().prepare(`SELECT i.*, o.order_no, t.code table_code FROM order_items i JOIN orders o ON o.id=i.order_id JOIN table_sessions s ON s.id=i.session_id JOIN tables t ON t.id=s.table_id
+    WHERE o.branch_id=? AND i.status='ready' AND s.status IN ('active','billing') ORDER BY i.ready_at`).all(req.branchId);
+  res.json({ items: rows.map((i) => ({ id: i.id, name: db.J(i.name, {}), qty: i.qty, table_code: i.table_code, order_no: i.order_no, ready_at: i.ready_at, guest_label: i.guest_label, options: db.J(i.options, []) })), server_time: now() });
+});
+
 // ---- print jobs (visible to POS for reprint / status) ----
 r.get('/print-jobs', P(), (req, res) => {
   res.json({ jobs: db.get().prepare('SELECT * FROM print_jobs WHERE branch_id=? ORDER BY id DESC LIMIT 100').all(req.branchId).map(printing.jobOut) });

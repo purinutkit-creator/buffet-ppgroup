@@ -2,10 +2,11 @@
 (function () {
   'use strict';
   const { h, mount, $, api, tr, money, hhmm, dur, ikey, store } = { ...BF, api: BF.api, store: BF.store };
-  const token = location.pathname.split('/').filter(Boolean)[1];
+  const PREVIEW = new URLSearchParams(location.search).has('preview');
+  const token = PREVIEW ? 'preview' : location.pathname.split('/').filter(Boolean)[1];
   const base = `/api/c/${encodeURIComponent(token)}`;
   const app = $('#app');
-  $('#theme-css').href = `/theme.css?scope=customer&t=${encodeURIComponent(token)}`;
+  if (!PREVIEW) $('#theme-css').href = `/theme.css?scope=customer&t=${encodeURIComponent(token)}`;
 
   const S = { info: null, menu: null, orders: [], calls: [], cart: [], guest: null, lang: 'th', cat: null, search: '', unseen: false, memberToken: null, timer: null, alerted: new Set() };
   const L = () => window.I18N[S.lang] || window.I18N.th;
@@ -13,8 +14,24 @@
   const T = (v) => tr(v, S.lang);
   const skey = (k) => `bf_${k}_${S.info ? S.info.session.public_code : token.slice(0, 8)}`;
 
+  // ---------- preview mode (Theme Studio): data + draft CSS arrive via postMessage, nothing is sent ----------
+  function bootPreview() {
+    const style = document.createElement('style'); document.head.appendChild(style);
+    window.addEventListener('message', (e) => {
+      if (e.origin !== location.origin || !e.data || e.data.type !== 'bf-preview') return;
+      style.textContent = e.data.css || '';
+      if (e.data.info) {
+        S.info = e.data.info; S.menu = e.data.menu; S.lang = e.data.lang || 'th'; BF.lang = S.lang; document.documentElement.lang = S.lang;
+        render(); renderMenu();
+      }
+    });
+    window.parent.postMessage({ type: 'bf-preview-ready' }, location.origin);
+    setInterval(tick, 1000);
+  }
+
   // ---------- boot ----------
   async function boot() {
+    if (PREVIEW) return bootPreview();
     mount(app, h('div.hero.skeleton', { style: { height: '300px', borderRadius: 0 } }), BF.states.loading(6));
     try {
       S.info = await api.get(base, { token: null });
@@ -138,7 +155,7 @@
     if (openSheet === 'info') { const c = $('#info-left'); if (c) c.textContent = left > 0 ? dur(left) : t('time_up'); }
   }
 
-  const orderingOpen = () => { const s = S.info.session; return s.status === 'active' && (!S.info.lock_after_time_up || BF.now() < s.order_end_at); };
+  const orderingOpen = () => { if (PREVIEW) return false; const s = S.info.session; return s.status === 'active' && (!S.info.lock_after_time_up || BF.now() < s.order_end_at); };
 
   function renderMenu() {
     const m = S.menu;
