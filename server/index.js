@@ -14,7 +14,7 @@ function createApp() {
   app.disable('x-powered-by');
   app.set('trust proxy', process.env.TRUST_PROXY === '1' ? 1 : false);
   app.use((req, res, next) => {
-    res.set({ 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', 'X-Frame-Options': 'SAMEORIGIN', 'Permissions-Policy': 'camera=(self), usb=(self), serial=(self), bluetooth=(self)' });
+    res.set({ 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', 'X-Frame-Options': 'SAMEORIGIN', 'Permissions-Policy': 'camera=(self), usb=(self), serial=(self)' });
     next();
   });
   app.use(express.json({ limit: '1mb' }));
@@ -26,6 +26,7 @@ function createApp() {
   app.use('/api/kds', require('./routes/kds'));
   app.use('/api/admin', require('./routes/admin'));
   app.use('/api/print', require('./routes/printbridge'));
+  app.get('/favicon.ico', (req, res) => res.status(204).end());
   app.get('/api/health', (req, res) => res.json({ ok: true, time: Date.now() }));
 
   // Theme CSS (public — values are validated colors/sizes/font names)
